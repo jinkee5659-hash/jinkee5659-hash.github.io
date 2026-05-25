@@ -65,6 +65,21 @@
           </div>
 
           <div class="field">
+            <label for="voiceSelect">声音</label>
+            <select id="voiceSelect">
+              <option value="auto">Auto natural voice</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="range-label">
+              <label for="rateRange">语速</label>
+              <span id="rateValue">92%</span>
+            </div>
+            <input id="rateRange" type="range" min="70" max="110" value="92" step="1" />
+          </div>
+
+          <div class="field">
             <label>训练重点</label>
             <div class="segmented" role="group" aria-label="Training focus">
               <button class="segment active" type="button" data-focus="speech">Speech</button>

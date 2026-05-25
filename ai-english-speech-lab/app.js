@@ -14,7 +14,31 @@ const state = {
   promptSize: 1.65,
   timerId: null,
   timerStart: 0,
+  voices: [],
+  selectedVoiceURI: "auto",
+  speechRate: 0.92,
+  speechTimers: [],
 };
+
+const naturalVoicePatterns = [
+  /natural/i,
+  /neural/i,
+  /premium/i,
+  /enhanced/i,
+  /siri/i,
+  /microsoft.*(aria|jenny|guy|davis|sara)/i,
+  /google.*english/i,
+  /samantha/i,
+  /daniel/i,
+  /karen/i,
+  /moira/i,
+  /serena/i,
+  /ava/i,
+  /allison/i,
+  /victoria/i,
+  /nicky/i,
+  /aaron/i,
+];
 
 const stopWords = new Set([
   "a",
@@ -206,6 +230,7 @@ const phraseNotes = [
 
 function init() {
   bindEvents();
+  initVoices();
   generateLearningPage();
   refreshIcons();
 }
@@ -215,10 +240,12 @@ function bindEvents() {
   $("#resetBtn").addEventListener("click", resetApp);
   $("#exportBtn").addEventListener("click", exportMarkdown);
   $("#listenSpeechBtn").addEventListener("click", () =>
-    speak(state.speech.map((item) => item.text).join(" "), 0.95)
+    speak(state.speech.map((item) => item.text).join(" "), state.speechRate)
   );
-  $("#listenSentenceBtn").addEventListener("click", () => speak(currentSentence().text, 0.95));
-  $("#slowSentenceBtn").addEventListener("click", () => speak(currentSentence().text, 0.72));
+  $("#listenSentenceBtn").addEventListener("click", () => speak(currentSentence().text, state.speechRate));
+  $("#slowSentenceBtn").addEventListener("click", () =>
+    speak(currentSentence().text, Math.max(0.62, state.speechRate - 0.18))
+  );
   $("#nextSentenceBtn").addEventListener("click", nextSentence);
   $("#shuffleWordsBtn").addEventListener("click", shuffleWords);
   $("#checkQuizBtn").addEventListener("click", checkQuiz);
@@ -227,6 +254,13 @@ function bindEvents() {
   $("#fontUpBtn").addEventListener("click", () => changePromptSize(0.12));
   $("#startTimerBtn").addEventListener("click", startTimer);
   $("#stopSpeakBtn").addEventListener("click", stopSpeakingTools);
+  $("#voiceSelect").addEventListener("change", (event) => {
+    state.selectedVoiceURI = event.target.value;
+  });
+  $("#rateRange").addEventListener("input", (event) => {
+    state.speechRate = Number(event.target.value) / 100;
+    $("#rateValue").textContent = `${event.target.value}%`;
+  });
 
   $$(".preset").forEach((button) => {
     button.addEventListener("click", () => {
@@ -247,6 +281,59 @@ function bindEvents() {
   $$(".tab").forEach((tab) => {
     tab.addEventListener("click", () => setTab(tab.dataset.tab));
   });
+}
+
+function initVoices() {
+  if (!("speechSynthesis" in window)) return;
+
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function loadVoices() {
+  state.voices = window.speechSynthesis
+    .getVoices()
+    .filter((voice) => /^en(-|_)?/i.test(voice.lang) || /english/i.test(voice.name))
+    .sort((a, b) => voiceScore(b) - voiceScore(a));
+  renderVoiceSelect();
+}
+
+function voiceScore(voice) {
+  const name = `${voice.name} ${voice.lang}`;
+  let score = 0;
+  if (/en-US/i.test(voice.lang)) score += 14;
+  if (/en-GB/i.test(voice.lang)) score += 10;
+  if (/en-AU|en-CA|en-IE|en-NZ|en-ZA/i.test(voice.lang)) score += 6;
+  if (voice.localService) score += 3;
+  naturalVoicePatterns.forEach((pattern, index) => {
+    if (pattern.test(name)) score += Math.max(4, 22 - index);
+  });
+  return score;
+}
+
+function renderVoiceSelect() {
+  const select = $("#voiceSelect");
+  if (!select) return;
+
+  const bestVoice = state.voices[0];
+  const currentValue = select.value || state.selectedVoiceURI;
+  const autoLabel = bestVoice ? `Auto · ${bestVoice.name}` : "Auto natural voice";
+  select.innerHTML = `<option value="auto">${escapeHtml(autoLabel)}</option>`;
+
+  state.voices.forEach((voice) => {
+    const option = document.createElement("option");
+    option.value = voice.voiceURI;
+    option.textContent = `${voice.name} · ${voice.lang}`;
+    select.appendChild(option);
+  });
+
+  if (state.voices.some((voice) => voice.voiceURI === currentValue)) {
+    select.value = currentValue;
+    state.selectedVoiceURI = currentValue;
+  } else {
+    select.value = "auto";
+    state.selectedVoiceURI = "auto";
+  }
 }
 
 function generateLearningPage() {
@@ -541,17 +628,54 @@ function checkQuiz() {
   $("#quizFeedback").textContent = `Score: ${score} / ${inputs.length}`;
 }
 
-function speak(text, rate = 1) {
+function speak(text, rate = state.speechRate) {
   if (!("speechSynthesis" in window)) {
     $("#recognizedText").textContent = "当前浏览器不支持朗读。";
     return;
   }
+  clearSpeechTimers();
   window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
+  const chunks = splitSpeechText(text);
+  speakChunks(chunks, rate, 0);
+}
+
+function speakChunks(chunks, rate, index) {
+  if (index >= chunks.length) return;
+
+  const utterance = new SpeechSynthesisUtterance(chunks[index]);
+  const voice = selectedVoice();
+  if (voice) {
+    utterance.voice = voice;
+    utterance.lang = voice.lang;
+  } else {
+    utterance.lang = "en-US";
+  }
   utterance.rate = rate;
-  utterance.pitch = 1;
+  utterance.pitch = 1.03;
+  utterance.volume = 1;
+  utterance.onend = () => {
+    const pause = chunks[index].length < 44 ? 120 : 230;
+    const timer = window.setTimeout(() => speakChunks(chunks, rate, index + 1), pause);
+    state.speechTimers.push(timer);
+  };
   window.speechSynthesis.speak(utterance);
+}
+
+function selectedVoice() {
+  if (state.selectedVoiceURI !== "auto") {
+    return state.voices.find((voice) => voice.voiceURI === state.selectedVoiceURI) || null;
+  }
+  return state.voices[0] || null;
+}
+
+function splitSpeechText(text) {
+  const chunks = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+  return chunks.map((chunk) => chunk.trim()).filter(Boolean);
+}
+
+function clearSpeechTimers() {
+  state.speechTimers.forEach((timer) => window.clearTimeout(timer));
+  state.speechTimers = [];
 }
 
 function recordSpeech() {
@@ -620,6 +744,7 @@ function startTimer() {
 
 function stopSpeakingTools() {
   clearInterval(state.timerId);
+  clearSpeechTimers();
   window.speechSynthesis?.cancel();
 }
 
@@ -627,6 +752,11 @@ function resetApp() {
   $("#topicInput").value = defaultTopic;
   $("#levelSelect").value = "beginner";
   $("#speechLength").value = "short";
+  $("#rateRange").value = "92";
+  $("#rateValue").textContent = "92%";
+  state.speechRate = 0.92;
+  state.selectedVoiceURI = "auto";
+  renderVoiceSelect();
   $$(".segment").forEach((button) => {
     button.classList.toggle("active", button.dataset.focus === "speech");
   });
