@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI English Speech Lab</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">AI English Speech Lab</p>
+          <h1>英语演讲学习工作台</h1>
+        </div>
+        <div class="top-actions">
+          <button class="icon-button" id="resetBtn" type="button" aria-label="Reset">
+            <i data-lucide="rotate-ccw"></i>
+          </button>
+          <button class="icon-button" id="exportBtn" type="button" aria-label="Export">
+            <i data-lucide="download"></i>
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="control-panel" aria-label="Topic generator">
+          <div class="field">
+            <label for="topicInput">英语主题</label>
+            <textarea
+              id="topicInput"
+              spellcheck="true"
+              placeholder="例如：AI can help students learn English"
+            ></textarea>
+          </div>
+
+          <div class="preset-grid" aria-label="AI topic presets">
+            <button type="button" class="preset">AI can help students learn English</button>
+            <button type="button" class="preset">Responsible AI in daily life</button>
+            <button type="button" class="preset">Prompt engineering for beginners</button>
+            <button type="button" class="preset">Machine learning changes work</button>
+            <button type="button" class="preset">My future job with AI</button>
+            <button type="button" class="preset">AI and human creativity</button>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="levelSelect">水平</label>
+              <select id="levelSelect">
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="confident">Confident</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="speechLength">演讲时长</label>
+              <select id="speechLength">
+                <option value="short">45 秒</option>
+                <option value="medium">90 秒</option>
+                <option value="long">2 分钟</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>训练重点</label>
+            <div class="segmented" role="group" aria-label="Training focus">
+              <button class="segment active" type="button" data-focus="speech">Speech</button>
+              <button class="segment" type="button" data-focus="vocab">Words</button>
+              <button class="segment" type="button" data-focus="qa">Q&A</button>
+            </div>
+          </div>
+
+          <button class="primary-button" id="generateBtn" type="button">
+            <i data-lucide="sparkles"></i>
+            <span>生成学习页</span>
+          </button>
+        </aside>
+
+        <section class="learning-panel" aria-live="polite">
+          <nav class="tabs" aria-label="Learning views">
+            <button class="tab active" type="button" data-tab="study">Study</button>
+            <button class="tab" type="button" data-tab="practice">Practice</button>
+            <button class="tab" type="button" data-tab="speak">Speak</button>
+          </nav>
+
+          <section class="tab-panel active" id="studyPanel">
+            <div class="summary-band">
+              <div>
+                <p class="label">Topic</p>
+                <h2 id="topicTitle">AI can help students learn English</h2>
+              </div>
+              <div class="score-pill" id="levelBadge">Beginner</div>
+            </div>
+
+            <div class="method-strip" id="methodStrip"></div>
+
+            <div class="content-grid">
+              <section class="tool-surface">
+                <div class="section-heading">
+                  <h3>演讲稿</h3>
+                  <button class="mini-button" id="listenSpeechBtn" type="button">
+                    <i data-lucide="volume-2"></i>
+                    <span>Listen</span>
+                  </button>
+                </div>
+                <article class="speech-card" id="speechText"></article>
+              </section>
+
+              <section class="tool-surface">
+                <div class="section-heading">
+                  <h3>关键词</h3>
+                  <button class="mini-button" id="shuffleWordsBtn" type="button">
+                    <i data-lucide="shuffle"></i>
+                    <span>Shuffle</span>
+                  </button>
+                </div>
+                <div class="word-list" id="wordList"></div>
+              </section>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="practicePanel">
+            <div class="practice-grid">
+              <section class="tool-surface">
+                <div class="section-heading">
+                  <h3>句子拆解</h3>
+                  <button class="mini-button" id="nextSentenceBtn" type="button">
+                    <i data-lucide="arrow-right"></i>
+                    <span>Next</span>
+                  </button>
+                </div>
+                <div class="sentence-trainer">
+                  <p class="sentence-index" id="sentenceIndex">1 / 5</p>
+                  <p class="large-sentence" id="currentSentence"></p>
+                  <p class="cn-note" id="sentenceNote"></p>
+                  <div class="button-row">
+                    <button class="mini-button" id="listenSentenceBtn" type="button">
+                      <i data-lucide="volume-2"></i>
+                      <span>Listen</span>
+                    </button>
+                    <button class="mini-button" id="slowSentenceBtn" type="button">
+                      <i data-lucide="snail"></i>
+                      <span>Slow</span>
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <section class="tool-surface">
+                <div class="section-heading">
+                  <h3>小测验</h3>
+                  <button class="mini-button" id="checkQuizBtn" type="button">
+                    <i data-lucide="check"></i>
+                    <span>Check</span>
+                  </button>
+                </div>
+                <div class="quiz-box" id="quizBox"></div>
+                <p class="feedback" id="quizFeedback"></p>
+              </section>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="speakPanel">
+            <div class="speak-layout">
+              <section class="tool-surface teleprompter">
+                <div class="section-heading">
+                  <h3>演讲模式</h3>
+                  <div class="button-row compact">
+                    <button class="icon-button" id="fontDownBtn" type="button" aria-label="Smaller text">
+                      <i data-lucide="minus"></i>
+                    </button>
+                    <button class="icon-button" id="fontUpBtn" type="button" aria-label="Larger text">
+                      <i data-lucide="plus"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="prompt-screen" id="promptScreen"></div>
+              </section>
+
+              <section class="tool-surface">
+                <div class="section-heading">
+                  <h3>跟读评分</h3>
+                  <button class="mini-button" id="recordBtn" type="button">
+                    <i data-lucide="mic"></i>
+                    <span>Record</span>
+                  </button>
+                </div>
+                <div class="meter">
+                  <div class="meter-fill" id="meterFill"></div>
+                </div>
+                <p class="score-text" id="scoreText">0%</p>
+                <p class="recognized" id="recognizedText"></p>
+                <div class="button-row">
+                  <button class="mini-button" id="startTimerBtn" type="button">
+                    <i data-lucide="timer"></i>
+                    <span>Timer</span>
+                  </button>
+                  <button class="mini-button" id="stopSpeakBtn" type="button">
+                    <i data-lucide="square"></i>
+                    <span>Stop</span>
+                  </button>
+                </div>
+                <p class="timer" id="timerText">00:00</p>
+              </section>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
