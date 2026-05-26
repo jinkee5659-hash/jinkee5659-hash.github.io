@@ -30,6 +30,7 @@ const els = {
   streakDays: document.querySelector("#streakDays"),
   storageState: document.querySelector("#storageState"),
   supportNotice: document.querySelector("#supportNotice"),
+  voiceSelect: document.querySelector("#voiceSelect"),
   accentSelect: document.querySelector("#accentSelect"),
   rateInput: document.querySelector("#rateInput"),
   rateValue: document.querySelector("#rateValue"),
@@ -43,7 +44,8 @@ const settingsKey = "echofit-settings-v1";
 let recognition = null;
 let isRecording = false;
 let history = loadJson(storageKey, []);
-let settings = loadJson(settingsKey, { accent: "en-US", rate: 0.85 });
+let settings = loadJson(settingsKey, { accent: "en-US", rate: 0.85, voiceURI: "auto" });
+let availableVoices = [];
 
 function loadJson(key, fallback) {
   try {
@@ -212,6 +214,49 @@ function escapeHtml(text) {
   });
 }
 
+function preferredVoice(voices = availableVoices) {
+  if (!voices.length) return null;
+
+  if (settings.voiceURI && settings.voiceURI !== "auto") {
+    const stored = voices.find((voice) => voice.voiceURI === settings.voiceURI);
+    if (stored) return stored;
+  }
+
+  return (
+    voices.find((voice) => voice.name === "Google US English") ||
+    voices.find((voice) => voice.name.includes("Google") && voice.lang === "en-US") ||
+    voices.find((voice) => voice.lang === "en-US") ||
+    voices.find((voice) => voice.lang.startsWith("en")) ||
+    null
+  );
+}
+
+function renderVoiceOptions() {
+  if (!window.speechSynthesis || !els.voiceSelect) return;
+
+  availableVoices = window.speechSynthesis.getVoices().filter((voice) => voice.lang.startsWith("en"));
+  const selected = preferredVoice(availableVoices);
+  const currentValue = settings.voiceURI || "auto";
+  els.voiceSelect.replaceChildren();
+
+  const autoOption = document.createElement("option");
+  autoOption.value = "auto";
+  autoOption.textContent = selected ? `Auto · ${selected.name}` : "Auto · Google US English";
+  els.voiceSelect.append(autoOption);
+
+  for (const voice of availableVoices) {
+    const option = document.createElement("option");
+    option.value = voice.voiceURI;
+    option.textContent = `${voice.name} · ${voice.lang}`;
+    els.voiceSelect.append(option);
+  }
+
+  els.voiceSelect.value =
+    currentValue !== "auto" && availableVoices.some((voice) => voice.voiceURI === currentValue)
+      ? currentValue
+      : "auto";
+}
+
 function saveAttempt(target, heard, confidence, comparison) {
   const missed = comparison.tokens
     .filter((token) => token.type === "missing")
@@ -303,7 +348,13 @@ function speakTarget() {
 
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = settings.accent;
+  const voice = preferredVoice();
+  if (voice) {
+    utterance.voice = voice;
+    utterance.lang = voice.lang;
+  } else {
+    utterance.lang = settings.accent;
+  }
   utterance.rate = Number(settings.rate);
   utterance.pitch = 1;
   window.speechSynthesis.speak(utterance);
@@ -346,6 +397,12 @@ function bindEvents() {
     if (recognition) recognition.lang = settings.accent;
   });
 
+  els.voiceSelect.addEventListener("change", () => {
+    settings.voiceURI = els.voiceSelect.value;
+    saveJson(settingsKey, settings);
+    renderVoiceOptions();
+  });
+
   els.rateInput.addEventListener("input", () => {
     settings.rate = Number(els.rateInput.value);
     els.rateValue.textContent = settings.rate.toFixed(2);
@@ -370,6 +427,7 @@ function registerServiceWorker() {
 
 function init() {
   els.targetText.value = phraseBank[0];
+  if (!settings.voiceURI) settings.voiceURI = "auto";
   els.accentSelect.value = settings.accent;
   els.rateInput.value = settings.rate;
   els.rateValue.textContent = Number(settings.rate).toFixed(2);
@@ -378,6 +436,10 @@ function init() {
   renderDiff([]);
   renderHistory();
   renderFocus();
+  renderVoiceOptions();
+  if (window.speechSynthesis) {
+    window.speechSynthesis.addEventListener("voiceschanged", renderVoiceOptions);
+  }
   setupRecognition();
   bindEvents();
   registerServiceWorker();

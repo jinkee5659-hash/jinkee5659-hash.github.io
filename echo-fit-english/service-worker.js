@@ -1,4 +1,4 @@
-const cacheName = "echofit-v1";
+const cacheName = "echofit-v2";
 const assets = [
   "./",
   "index.html",
