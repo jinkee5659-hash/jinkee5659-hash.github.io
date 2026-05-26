@@ -21,6 +21,7 @@ const state = {
 };
 
 const naturalVoicePatterns = [
+  /google us english/i,
   /natural/i,
   /neural/i,
   /premium/i,
@@ -301,6 +302,7 @@ function loadVoices() {
 function voiceScore(voice) {
   const name = `${voice.name} ${voice.lang}`;
   let score = 0;
+  if (/^google us english$/i.test(voice.name) && /^en-US$/i.test(voice.lang)) score += 1000;
   if (/en-US/i.test(voice.lang)) score += 14;
   if (/en-GB/i.test(voice.lang)) score += 10;
   if (/en-AU|en-CA|en-IE|en-NZ|en-ZA/i.test(voice.lang)) score += 6;
