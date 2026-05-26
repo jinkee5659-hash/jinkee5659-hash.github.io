@@ -1,0 +1,17 @@
+{
+  "name": "EchoFit English",
+  "short_name": "EchoFit",
+  "description": "Mobile English speaking practice with speech recognition comparison.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f2ea",
+  "theme_color": "#276d52",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f7f2ea" />
+    <meta
+      name="description"
+      content="A mobile-first English speaking practice app for comparing intended sentences with browser speech recognition."
+    />
+    <title>EchoFit English</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand" aria-label="EchoFit English">
+          <img src="assets/icon.svg" alt="" />
+          <div>
+            <strong>EchoFit</strong>
+            <span>English</span>
+          </div>
+        </div>
+        <div class="streak" aria-label="练习连续天数">
+          <span id="streakDays">0</span>
+          <small>day</small>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="practice-panel" aria-labelledby="practiceTitle">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Speak Lab</p>
+              <h1 id="practiceTitle">想的、说的、识别出来的，对齐到一句话里</h1>
+            </div>
+            <div class="score-ring" aria-label="最近一次得分">
+              <span id="scoreValue">--</span>
+              <small>score</small>
+            </div>
+          </div>
+
+          <label class="field-label" for="targetText">目标句</label>
+          <textarea
+            id="targetText"
+            spellcheck="false"
+            rows="4"
+            placeholder="I would like a cup of coffee without sugar."
+          ></textarea>
+
+          <div class="toolbar" aria-label="练习控制">
+            <button id="randomBtn" class="icon-button" type="button" title="换一句">
+              <span aria-hidden="true">↻</span>
+              <span>换句</span>
+            </button>
+            <button id="playBtn" class="icon-button" type="button" title="朗读目标句">
+              <span aria-hidden="true">▶</span>
+              <span>跟读</span>
+            </button>
+            <button id="recordBtn" class="primary-action" type="button">
+              <span class="record-dot" aria-hidden="true"></span>
+              <span id="recordLabel">开始说</span>
+            </button>
+          </div>
+
+          <div id="supportNotice" class="notice" hidden></div>
+
+          <div class="result-grid">
+            <section class="result-block" aria-labelledby="heardTitle">
+              <div class="block-title">
+                <h2 id="heardTitle">系统听到</h2>
+                <span id="confidenceText">--</span>
+              </div>
+              <p id="heardText" class="heard-text">等待第一次录音</p>
+            </section>
+
+            <section class="result-block" aria-labelledby="compareTitle">
+              <div class="block-title">
+                <h2 id="compareTitle">差异</h2>
+                <span id="wordCount">0 words</span>
+              </div>
+              <div id="diffView" class="diff-view" aria-live="polite"></div>
+            </section>
+          </div>
+        </section>
+
+        <aside class="side-panel">
+          <section class="metric-strip" aria-label="统计">
+            <div>
+              <strong id="sessionCount">0</strong>
+              <span>sessions</span>
+            </div>
+            <div>
+              <strong id="avgScore">--</strong>
+              <span>average</span>
+            </div>
+            <div>
+              <strong id="bestScore">--</strong>
+              <span>best</span>
+            </div>
+          </section>
+
+          <section class="focus-panel" aria-labelledby="focusTitle">
+            <div class="section-head">
+              <h2 id="focusTitle">下一句重点</h2>
+              <button id="clearBtn" type="button">清空</button>
+            </div>
+            <ul id="focusList" class="focus-list"></ul>
+          </section>
+
+          <section class="settings-panel" aria-labelledby="settingsTitle">
+            <h2 id="settingsTitle">声音设置</h2>
+            <label class="select-field">
+              <span>跟读声音</span>
+              <select id="voiceSelect">
+                <option value="auto">Auto · Google US English</option>
+              </select>
+            </label>
+            <label class="select-field">
+              <span>识别口音</span>
+              <select id="accentSelect">
+                <option value="en-US">American English</option>
+                <option value="en-GB">British English</option>
+                <option value="en-AU">Australian English</option>
+                <option value="en-CA">Canadian English</option>
+              </select>
+            </label>
+            <label class="range-field">
+              <span>跟读速度 <b id="rateValue">0.85</b></span>
+              <input id="rateInput" type="range" min="0.55" max="1.15" step="0.05" value="0.85" />
+            </label>
+          </section>
+        </aside>
+      </main>
+
+      <section class="history-band" aria-labelledby="historyTitle">
+        <div class="section-head">
+          <h2 id="historyTitle">练习记录</h2>
+          <span id="storageState">local</span>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </section>
+    </div>
+
+    <script src="app.js?v=google-us-voice" defer></script>
+  </body>
+</html>
