@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="EchoFit icon">
+  <rect width="512" height="512" rx="96" fill="#f7f2ea"/>
+  <path d="M132 272c0-70 48-124 124-124s124 54 124 124" fill="none" stroke="#276d52" stroke-width="34" stroke-linecap="round"/>
+  <path d="M168 288c18 54 50 80 88 80s70-26 88-80" fill="none" stroke="#285f82" stroke-width="34" stroke-linecap="round"/>
+  <path d="M168 232h176" stroke="#b35a20" stroke-width="30" stroke-linecap="round"/>
+  <circle cx="204" cy="272" r="20" fill="#232421"/>
+  <circle cx="308" cy="272" r="20" fill="#232421"/>
+  <path d="M238 316c12 9 24 13 36 13s24-4 36-13" fill="none" stroke="#232421" stroke-width="18" stroke-linecap="round"/>
+</svg>
