@@ -6,6 +6,7 @@
     <title>AI English Speech Lab</title>
     <link rel="stylesheet" href="styles.css" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script defer src="vendor/three.min.js"></script>
     <script defer src="app.js"></script>
   </head>
   <body>
@@ -24,6 +25,22 @@
           </button>
         </div>
       </header>
+
+      <section class="stage-viewport" id="stageScene" aria-label="3D speech room">
+        <canvas id="stageCanvas"></canvas>
+        <div class="stage-hud">
+          <div class="stage-status">
+            <p class="eyebrow">Immersive Speech Room</p>
+            <h2 id="stageTopic">AI can help students learn English</h2>
+            <p id="stageLine">Hello everyone. Today I want to talk about AI can help students learn English.</p>
+          </div>
+          <div class="stage-metrics" aria-label="Speech room metrics">
+            <span id="stageMode">Study</span>
+            <span id="stageProgress">1 / 6</span>
+            <span id="stageScore">0%</span>
+          </div>
+        </div>
+      </section>
 
       <main class="workspace">
         <aside class="control-panel" aria-label="Topic generator">

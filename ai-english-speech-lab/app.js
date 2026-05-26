@@ -18,6 +18,29 @@ const state = {
   selectedVoiceURI: "auto",
   speechRate: 0.92,
   speechTimers: [],
+  stageMode: "Study",
+  stageScore: 0,
+  isSpeaking: false,
+};
+
+const stage3d = {
+  renderer: null,
+  scene: null,
+  camera: null,
+  clock: null,
+  group: null,
+  screen: null,
+  teleprompter: null,
+  wordPanels: [],
+  equalizer: [],
+  presenter: null,
+  pulseRing: null,
+  spotlight: null,
+  targetCamera: null,
+  pointerX: 0,
+  pointerY: 0,
+  active: false,
+  textures: [],
 };
 
 const naturalVoicePatterns = [
@@ -232,6 +255,7 @@ const phraseNotes = [
 function init() {
   bindEvents();
   initVoices();
+  initStageScene();
   generateLearningPage();
   refreshIcons();
 }
@@ -338,6 +362,366 @@ function renderVoiceSelect() {
   }
 }
 
+function initStageScene() {
+  const canvas = $("#stageCanvas");
+  const shell = $("#stageScene");
+  if (!canvas || !shell) return;
+
+  if (!window.THREE) {
+    shell.classList.add("stage-fallback");
+    return;
+  }
+
+  const THREE = window.THREE;
+  stage3d.scene = new THREE.Scene();
+  stage3d.scene.background = new THREE.Color(0x10191d);
+  stage3d.scene.fog = new THREE.Fog(0x10191d, 10, 26);
+  stage3d.camera = new THREE.PerspectiveCamera(42, 1, 0.1, 80);
+  stage3d.camera.position.set(0, 3.5, 10.5);
+  stage3d.targetCamera = new THREE.Vector3(0, 3.5, 10.5);
+  stage3d.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  stage3d.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  stage3d.renderer.outputEncoding = THREE.sRGBEncoding;
+  stage3d.renderer.shadowMap.enabled = true;
+  stage3d.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  stage3d.clock = new THREE.Clock();
+  stage3d.group = new THREE.Group();
+  stage3d.scene.add(stage3d.group);
+
+  buildStageRoom();
+  resizeStageScene();
+  window.addEventListener("resize", resizeStageScene);
+  shell.addEventListener("pointermove", (event) => {
+    const rect = shell.getBoundingClientRect();
+    stage3d.pointerX = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+    stage3d.pointerY = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+  });
+  stage3d.active = true;
+  animateStageScene();
+}
+
+function buildStageRoom() {
+  const THREE = window.THREE;
+  const group = stage3d.group;
+  const mat = (color, roughness = 0.74, metalness = 0.06) =>
+    new THREE.MeshStandardMaterial({ color, roughness, metalness });
+
+  const ambient = new THREE.HemisphereLight(0xd8fff6, 0x0b1114, 1.7);
+  stage3d.scene.add(ambient);
+
+  const key = new THREE.SpotLight(0xffffff, 2.6, 28, 0.42, 0.55, 1);
+  key.position.set(0, 7.4, 5.8);
+  key.target.position.set(0, 0.2, -1.4);
+  key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  stage3d.scene.add(key, key.target);
+  stage3d.spotlight = key;
+
+  const sideA = new THREE.PointLight(0x63d6c2, 1.8, 16);
+  sideA.position.set(-5.8, 2.6, 0.3);
+  const sideB = new THREE.PointLight(0xffc36d, 1.35, 14);
+  sideB.position.set(5.2, 2.2, 1.2);
+  stage3d.scene.add(sideA, sideB);
+
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(18, 15),
+    new THREE.MeshStandardMaterial({ color: 0x17252a, roughness: 0.86, metalness: 0.08 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(0, -1.22, 0.4);
+  floor.receiveShadow = true;
+  group.add(floor);
+
+  const grid = new THREE.GridHelper(18, 28, 0x2a4e4c, 0x203337);
+  grid.position.y = -1.205;
+  grid.material.transparent = true;
+  grid.material.opacity = 0.35;
+  group.add(grid);
+
+  const backWall = new THREE.Mesh(new THREE.BoxGeometry(18, 7.2, 0.24), mat(0x122025, 0.82, 0.04));
+  backWall.position.set(0, 2.2, -6.2);
+  backWall.receiveShadow = true;
+  group.add(backWall);
+
+  const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.22, 6.8, 12), mat(0x101b20, 0.84, 0.03));
+  leftWall.position.set(-8.9, 2.0, -0.3);
+  leftWall.receiveShadow = true;
+  group.add(leftWall);
+
+  const rightWall = leftWall.clone();
+  rightWall.position.x = 8.9;
+  group.add(rightWall);
+
+  const platform = new THREE.Mesh(new THREE.BoxGeometry(9.5, 0.42, 4.2), mat(0x22343a, 0.66, 0.12));
+  platform.position.set(0, -0.98, -2.1);
+  platform.castShadow = true;
+  platform.receiveShadow = true;
+  group.add(platform);
+
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(7.7, 3.95, 0.18), mat(0x0b1215, 0.5, 0.38));
+  frame.position.set(0, 2.45, -5.92);
+  group.add(frame);
+
+  stage3d.screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(7.2, 3.4),
+    new THREE.MeshBasicMaterial({ map: createStageTexture("AI English Speech Lab", "Immersive speech room", "STUDY") })
+  );
+  stage3d.screen.position.set(0, 2.45, -5.79);
+  group.add(stage3d.screen);
+
+  stage3d.teleprompter = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.4, 1.15),
+    new THREE.MeshBasicMaterial({
+      map: createPanelTexture("Ready", "Your current sentence appears here", "#112024", "#9ee0d2"),
+      transparent: true,
+    })
+  );
+  stage3d.teleprompter.position.set(0, 0.55, 0.3);
+  stage3d.teleprompter.rotation.x = -0.28;
+  group.add(stage3d.teleprompter);
+
+  const podium = new THREE.Group();
+  const podiumTop = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.25, 0.72), mat(0x31534e, 0.58, 0.22));
+  podiumTop.position.y = 0.05;
+  const podiumStem = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.48, 1.0, 28), mat(0x233d3d, 0.62, 0.18));
+  podiumStem.position.y = -0.55;
+  podium.add(podiumTop, podiumStem);
+  podium.position.set(0, -0.1, -1.05);
+  podium.traverse((item) => {
+    if (item.isMesh) item.castShadow = true;
+  });
+  group.add(podium);
+
+  stage3d.presenter = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 0.9, 28), mat(0x4fa391, 0.42, 0.12));
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 32, 20), mat(0xf0caa3, 0.5, 0.02));
+  body.position.y = 0.08;
+  head.position.y = 0.7;
+  stage3d.presenter.add(body, head);
+  stage3d.presenter.position.set(0, -0.55, -0.8);
+  stage3d.presenter.traverse((item) => {
+    if (item.isMesh) item.castShadow = true;
+  });
+  group.add(stage3d.presenter);
+
+  const ringMaterial = new THREE.MeshBasicMaterial({ color: 0x80f0d8, transparent: true, opacity: 0.34 });
+  stage3d.pulseRing = new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.012, 12, 96), ringMaterial);
+  stage3d.pulseRing.rotation.x = Math.PI / 2;
+  stage3d.pulseRing.position.set(0, -0.74, -0.95);
+  group.add(stage3d.pulseRing);
+
+  for (let i = 0; i < 18; i += 1) {
+    const row = Math.floor(i / 6);
+    const col = i % 6;
+    const seat = new THREE.Mesh(new THREE.SphereGeometry(0.13, 18, 12), mat(0x263d42, 0.7, 0.05));
+    seat.position.set((col - 2.5) * 1.05, -0.72, 2.1 + row * 0.82);
+    seat.scale.y = 0.82;
+    group.add(seat);
+  }
+
+  const panelPositions = [
+    [-5.25, 1.65, -3.9, 0.24],
+    [5.25, 1.65, -3.9, -0.24],
+    [-5.65, 0.25, -1.35, 0.48],
+    [5.65, 0.25, -1.35, -0.48],
+  ];
+  stage3d.wordPanels = panelPositions.map(([x, y, z, ry]) => {
+    const panel = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.15, 0.9),
+      new THREE.MeshBasicMaterial({ map: createPanelTexture("Keyword", "Practice", "#fff8eb", "#1f7a68") })
+    );
+    panel.position.set(x, y, z);
+    panel.rotation.y = ry;
+    group.add(panel);
+    return panel;
+  });
+
+  for (let i = 0; i < 9; i += 1) {
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.45, 0.09), mat(0x72d8c3, 0.42, 0.22));
+    bar.position.set((i - 4) * 0.14, -0.38, -0.38);
+    bar.castShadow = true;
+    stage3d.equalizer.push(bar);
+    group.add(bar);
+  }
+}
+
+function createStageTexture(title, line, mode) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1400;
+  canvas.height = 660;
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  gradient.addColorStop(0, "#11322f");
+  gradient.addColorStop(0.55, "#16242b");
+  gradient.addColorStop(1, "#32281b");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  drawCanvasGrid(ctx, canvas.width, canvas.height);
+  ctx.fillStyle = "rgba(153, 214, 200, 0.16)";
+  ctx.fillRect(58, 58, canvas.width - 116, canvas.height - 116);
+  ctx.strokeStyle = "rgba(255, 253, 248, 0.18)";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(58, 58, canvas.width - 116, canvas.height - 116);
+  ctx.fillStyle = "#99d6c8";
+  ctx.font = "700 46px Inter, Arial, sans-serif";
+  ctx.fillText(mode.toUpperCase(), 92, 128);
+  ctx.fillStyle = "#fffdf8";
+  ctx.font = "900 84px Inter, Arial, sans-serif";
+  wrapCanvasText(ctx, title, 92, 245, 1180, 98, 2);
+  ctx.fillStyle = "rgba(255, 253, 248, 0.74)";
+  ctx.font = "500 38px Inter, Arial, sans-serif";
+  wrapCanvasText(ctx, line, 92, 480, 1160, 48, 2);
+  return makeCanvasTexture(canvas);
+}
+
+function createPanelTexture(title, line, bg = "#fff8eb", accent = "#1f7a68") {
+  const canvas = document.createElement("canvas");
+  canvas.width = 760;
+  canvas.height = 320;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = accent;
+  ctx.fillRect(0, 0, 18, canvas.height);
+  ctx.fillStyle = "#172026";
+  ctx.font = "900 54px Inter, Arial, sans-serif";
+  wrapCanvasText(ctx, title, 54, 105, 640, 62, 2);
+  ctx.fillStyle = "#66727a";
+  ctx.font = "600 34px Inter, Arial, sans-serif";
+  wrapCanvasText(ctx, line, 54, 230, 630, 42, 2);
+  return makeCanvasTexture(canvas);
+}
+
+function makeCanvasTexture(canvas) {
+  const THREE = window.THREE;
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.anisotropy = Math.min(8, stage3d.renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+  texture.needsUpdate = true;
+  stage3d.textures.push(texture);
+  return texture;
+}
+
+function drawCanvasGrid(ctx, width, height) {
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.045)";
+  ctx.lineWidth = 2;
+  for (let x = 0; x < width; x += 80) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, height);
+    ctx.stroke();
+  }
+  for (let y = 0; y < height; y += 80) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) {
+  const words = String(text).split(/\s+/);
+  let line = "";
+  let lines = 0;
+  for (let index = 0; index < words.length; index += 1) {
+    const word = words[index];
+    const testLine = line ? `${line} ${word}` : word;
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      if (lines >= maxLines - 1) {
+        ctx.fillText(`${line}...`, x, y + lines * lineHeight);
+        return;
+      }
+      ctx.fillText(line, x, y + lines * lineHeight);
+      line = word;
+      lines += 1;
+      continue;
+    }
+    line = testLine;
+    if (index === words.length - 1 && lines < maxLines) {
+      ctx.fillText(line, x, y + lines * lineHeight);
+      lines += 1;
+    }
+  }
+}
+
+function resizeStageScene() {
+  if (!stage3d.renderer || !stage3d.camera) return;
+  const canvas = $("#stageCanvas");
+  const rect = canvas.getBoundingClientRect();
+  const width = Math.max(1, Math.floor(rect.width));
+  const height = Math.max(1, Math.floor(rect.height));
+  stage3d.renderer.setSize(width, height, false);
+  stage3d.camera.aspect = width / height;
+  stage3d.camera.updateProjectionMatrix();
+}
+
+function animateStageScene() {
+  if (!stage3d.active || !stage3d.renderer || !stage3d.scene || !stage3d.camera) return;
+  requestAnimationFrame(animateStageScene);
+  resizeStageScene();
+  const t = stage3d.clock.getElapsedTime();
+  const target = stage3d.targetCamera || new window.THREE.Vector3(0, 3.5, 10.5);
+  stage3d.camera.position.lerp(target, 0.04);
+  stage3d.camera.position.x += (stage3d.pointerX * 0.16 - stage3d.camera.position.x * 0.002) * 0.04;
+  stage3d.camera.lookAt(0, 1.0, -2.2);
+  stage3d.group.rotation.y = stage3d.pointerX * 0.025;
+  if (stage3d.presenter) stage3d.presenter.position.y = -0.55 + Math.sin(t * 2.2) * 0.025;
+  if (stage3d.pulseRing) {
+    const speakingBoost = state.isSpeaking ? 0.38 : 0.12;
+    const scale = 1 + Math.sin(t * 3.4) * speakingBoost;
+    stage3d.pulseRing.scale.setScalar(scale);
+    stage3d.pulseRing.material.opacity = state.isSpeaking ? 0.42 : 0.2;
+  }
+  stage3d.equalizer.forEach((bar, index) => {
+    const wave = state.isSpeaking ? Math.abs(Math.sin(t * 5 + index * 0.75)) : Math.abs(Math.sin(t * 1.4 + index)) * 0.2;
+    bar.scale.y = 0.5 + wave * 2.6;
+  });
+  if (stage3d.spotlight) stage3d.spotlight.intensity = state.isSpeaking ? 3.4 : 2.45;
+  stage3d.renderer.render(stage3d.scene, stage3d.camera);
+}
+
+function updateStageScene() {
+  const sentence = currentSentence();
+  $("#stageTopic").textContent = state.topic;
+  $("#stageLine").textContent = sentence.text || "";
+  $("#stageMode").textContent = state.stageMode;
+  $("#stageProgress").textContent = `${Math.min(state.sentenceIndex + 1, state.speech.length || 1)} / ${state.speech.length || 1}`;
+  $("#stageScore").textContent = `${state.stageScore}%`;
+
+  if (!stage3d.renderer || !stage3d.screen) return;
+  swapMeshTexture(stage3d.screen, createStageTexture(state.topic, sentence.text || "Ready to practice.", state.stageMode));
+  swapMeshTexture(
+    stage3d.teleprompter,
+    createPanelTexture(`Line ${state.sentenceIndex + 1}`, sentence.text || "Ready", "#102024", "#99d6c8")
+  );
+  stage3d.wordPanels.forEach((panel, index) => {
+    const word = state.words[index] || { term: "Practice", cn: "Speak aloud" };
+    swapMeshTexture(panel, createPanelTexture(word.term, word.cn, "#fff8eb", index % 2 ? "#cf5b45" : "#1f7a68"));
+  });
+  setStageCameraForMode();
+}
+
+function swapMeshTexture(mesh, texture) {
+  if (!mesh?.material) return;
+  const previous = mesh.material.map;
+  mesh.material.map = texture;
+  mesh.material.needsUpdate = true;
+  if (previous?.dispose) previous.dispose();
+}
+
+function setStageCameraForMode() {
+  if (!window.THREE || !stage3d.targetCamera) return;
+  const targets = {
+    Study: [0, 3.45, 10.4],
+    Practice: [1.1, 3.1, 8.7],
+    Speak: [0, 2.65, 7.1],
+    Listen: [-0.65, 3.0, 8.2],
+  };
+  const target = targets[state.stageMode] || targets.Study;
+  stage3d.targetCamera.set(target[0], target[1], target[2]);
+}
+
 function generateLearningPage() {
   state.topic = cleanTopic($("#topicInput").value || defaultTopic);
   state.level = $("#levelSelect").value;
@@ -349,6 +733,7 @@ function generateLearningPage() {
   renderStudy();
   renderPractice();
   renderSpeak();
+  updateStageScene();
   refreshIcons();
 }
 
@@ -558,6 +943,7 @@ function renderCurrentSentence() {
   $("#sentenceIndex").textContent = `${state.sentenceIndex + 1} / ${state.speech.length}`;
   $("#currentSentence").textContent = sentence.text;
   $("#sentenceNote").textContent = sentence.note;
+  updateStageScene();
 }
 
 function renderQuiz() {
@@ -593,10 +979,12 @@ function renderSpeak() {
 }
 
 function setTab(tabName) {
+  state.stageMode = titleWord(tabName);
   $$(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.tab === tabName));
   $$(".tab-panel").forEach((panel) =>
     panel.classList.toggle("active", panel.id === `${tabName}Panel`)
   );
+  updateStageScene();
 }
 
 function nextSentence() {
@@ -627,7 +1015,9 @@ function checkQuiz() {
     if (correct) score += 1;
   });
 
+  state.stageScore = Math.round((score / inputs.length) * 100);
   $("#quizFeedback").textContent = `Score: ${score} / ${inputs.length}`;
+  updateStageScene();
 }
 
 function speak(text, rate = state.speechRate) {
@@ -637,12 +1027,19 @@ function speak(text, rate = state.speechRate) {
   }
   clearSpeechTimers();
   window.speechSynthesis.cancel();
+  state.isSpeaking = true;
+  state.stageMode = "Listen";
+  updateStageScene();
   const chunks = splitSpeechText(text);
   speakChunks(chunks, rate, 0);
 }
 
 function speakChunks(chunks, rate, index) {
-  if (index >= chunks.length) return;
+  if (index >= chunks.length) {
+    state.isSpeaking = false;
+    updateStageScene();
+    return;
+  }
 
   const utterance = new SpeechSynthesisUtterance(chunks[index]);
   const voice = selectedVoice();
@@ -693,6 +1090,8 @@ function recordSpeech() {
   recognition.maxAlternatives = 1;
 
   $("#recognizedText").textContent = "Listening...";
+  state.stageMode = "Speak";
+  updateStageScene();
   recognition.start();
 
   recognition.onresult = (event) => {
@@ -702,6 +1101,8 @@ function recordSpeech() {
     $("#recognizedText").textContent = spoken;
     $("#scoreText").textContent = `${score}%`;
     $("#meterFill").style.width = `${score}%`;
+    state.stageScore = score;
+    updateStageScene();
   };
 
   recognition.onerror = () => {
@@ -747,7 +1148,9 @@ function startTimer() {
 function stopSpeakingTools() {
   clearInterval(state.timerId);
   clearSpeechTimers();
+  state.isSpeaking = false;
   window.speechSynthesis?.cancel();
+  updateStageScene();
 }
 
 function resetApp() {
@@ -758,6 +1161,8 @@ function resetApp() {
   $("#rateValue").textContent = "92%";
   state.speechRate = 0.92;
   state.selectedVoiceURI = "auto";
+  state.stageScore = 0;
+  state.isSpeaking = false;
   renderVoiceSelect();
   $$(".segment").forEach((button) => {
     button.classList.toggle("active", button.dataset.focus === "speech");
