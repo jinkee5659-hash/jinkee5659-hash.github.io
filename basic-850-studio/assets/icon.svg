@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Basic 850 icon">
+  <rect width="512" height="512" rx="96" fill="#050505"/>
+  <path d="M96 120h320M96 392h320M120 96v320M392 96v320" stroke="#2f2f2f" stroke-width="12"/>
+  <path d="M138 270c0-68 46-120 118-120s118 52 118 120" fill="none" stroke="#f5f5f5" stroke-width="30" stroke-linecap="round"/>
+  <path d="M174 292c18 50 48 74 82 74s64-24 82-74" fill="none" stroke="#a8a8a8" stroke-width="30" stroke-linecap="round"/>
+  <path d="M176 232h160" stroke="#f5f5f5" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="206" cy="270" r="17" fill="#f5f5f5"/>
+  <circle cx="306" cy="270" r="17" fill="#f5f5f5"/>
+  <path d="M232 318c12 8 24 12 36 12s24-4 36-12" fill="none" stroke="#f5f5f5" stroke-width="16" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,17 @@
+{
+  "name": "Basic 850 Studio",
+  "short_name": "Basic850",
+  "description": "Basic English 850 深度学习应用的五套交互设计方案与可点击原型。",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

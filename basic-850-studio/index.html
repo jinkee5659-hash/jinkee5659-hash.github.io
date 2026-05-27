@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#eef3ef" />
+    <meta
+      name="description"
+      content="Basic English 850 深度学习应用的五套交互设计方案与可点击原型。"
+    />
+    <title>Basic 850 Studio</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand" aria-label="Basic 850 Studio">
+          <img src="assets/icon.svg" alt="" />
+          <div>
+            <strong>Basic 850</strong>
+            <span>深度英语训练室</span>
+          </div>
+        </div>
+        <div class="top-stats" aria-label="词库概览">
+          <span><b>850</b> words</span>
+          <span><b>5</b> designs</span>
+          <span><b>4</b> drills</span>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="design-rail" aria-labelledby="designTitle">
+          <div class="rail-head">
+            <p class="eyebrow">Design routes</p>
+            <h1 id="designTitle">5 个不同的应用方向</h1>
+          </div>
+          <div id="conceptList" class="concept-list"></div>
+        </aside>
+
+        <section class="prototype-stage" aria-labelledby="conceptTitle">
+          <div class="concept-hero">
+            <div>
+              <p id="conceptKicker" class="eyebrow">方案 01</p>
+              <h2 id="conceptTitle">词汇星图</h2>
+              <p id="conceptSummary" class="concept-summary"></p>
+            </div>
+            <div class="fit-panel" aria-label="方案适配度">
+              <span id="conceptFitScore">92</span>
+              <small>fit</small>
+            </div>
+          </div>
+
+          <div class="focus-grid">
+            <section class="learning-tool" aria-labelledby="toolTitle">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Live prototype</p>
+                  <h3 id="toolTitle">850 单词深度练习台</h3>
+                </div>
+                <button id="speakWordBtn" class="icon-button" type="button" title="朗读当前单词">
+                  <span aria-hidden="true">▶</span>
+                  <span>朗读</span>
+                </button>
+              </div>
+
+              <div id="categoryTabs" class="segmented" aria-label="词类筛选"></div>
+              <div id="wordCloud" class="word-cloud" aria-label="单词列表"></div>
+
+              <article class="word-lab" aria-live="polite">
+                <div class="word-title-row">
+                  <div>
+                    <p id="wordCategory" class="eyebrow">Operations</p>
+                    <h4 id="activeWord">come</h4>
+                  </div>
+                  <span id="wordIndex" class="word-index">1/850</span>
+                </div>
+                <p id="wordMeaning" class="meaning"></p>
+                <div class="pattern-row">
+                  <span id="patternOne"></span>
+                  <span id="patternTwo"></span>
+                  <span id="patternThree"></span>
+                </div>
+                <div id="exampleList" class="example-list"></div>
+              </article>
+
+              <div class="drill-board">
+                <div class="mode-tabs" aria-label="训练模式">
+                  <button class="is-active" type="button" data-mode="sentence">造句</button>
+                  <button type="button" data-mode="dialogue">对话</button>
+                  <button type="button" data-mode="shadow">跟读</button>
+                  <button type="button" data-mode="review">复盘</button>
+                </div>
+                <div id="drillContent" class="drill-content"></div>
+              </div>
+            </section>
+
+            <aside class="scheme-panel" aria-labelledby="schemeTitle">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Product plan</p>
+                  <h3 id="schemeTitle">信息架构</h3>
+                </div>
+                <span id="schemeTag" class="scheme-tag">Atlas</span>
+              </div>
+              <div id="moduleList" class="module-list"></div>
+              <div class="recommendation">
+                <strong>我建议</strong>
+                <p id="recommendationText"></p>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <aside class="source-panel" aria-labelledby="sourceTitle">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Source list</p>
+              <h3 id="sourceTitle">850 词表资料</h3>
+            </div>
+            <span class="scheme-tag">C.K. Ogden</span>
+          </div>
+
+          <div class="source-grid">
+            <button class="source-thumb is-active" type="button" data-source="assets/basic-850-page-1.jpg">
+              <img src="assets/basic-850-page-1.jpg" alt="Basic English 850 词表第一页" />
+              <span>Operations + Things</span>
+            </button>
+            <button class="source-thumb" type="button" data-source="assets/basic-850-page-2.jpg">
+              <img src="assets/basic-850-page-2.jpg" alt="Basic English 850 词表第二页" />
+              <span>Things + Qualities</span>
+            </button>
+            <button class="source-thumb" type="button" data-source="assets/basic-850-page-3.jpg">
+              <img src="assets/basic-850-page-3.jpg" alt="Basic English 850 词表第三页" />
+              <span>Opposites + Others</span>
+            </button>
+          </div>
+
+          <figure class="source-preview">
+            <img id="sourcePreview" src="assets/basic-850-page-1.jpg" alt="当前词表资料预览" />
+          </figure>
+
+          <div class="coverage-list" aria-label="词类覆盖">
+            <div><b>100</b><span>动作/结构词</span></div>
+            <div><b>600</b><span>名词</span></div>
+            <div><b>150</b><span>形容词</span></div>
+            <div><b>49</b><span>日期数字等</span></div>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <script src="app.js?v=basic-850-designs" defer></script>
+  </body>
+</html>
