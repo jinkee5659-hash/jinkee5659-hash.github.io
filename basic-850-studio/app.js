@@ -676,11 +676,28 @@ function bindSources() {
   });
 }
 
+function getPreferredEnglishVoice() {
+  const voices = window.speechSynthesis?.getVoices?.() || [];
+  return (
+    voices.find((voice) => voice.name === "Google US English" && voice.lang === "en-US") ||
+    voices.find((voice) => voice.name === "Google US English") ||
+    voices.find((voice) => voice.lang === "en-US" && voice.name.includes("Google")) ||
+    voices.find((voice) => voice.lang === "en-US") ||
+    voices.find((voice) => voice.lang.startsWith("en")) ||
+    null
+  );
+}
+
 function speak(text, rate = 0.82) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
+  const voice = getPreferredEnglishVoice();
   utterance.lang = "en-US";
+  if (voice) {
+    utterance.voice = voice;
+    utterance.lang = voice.lang || "en-US";
+  }
   utterance.rate = rate;
   window.speechSynthesis.speak(utterance);
 }
@@ -701,6 +718,8 @@ function init() {
   renderDrill();
   bindModeTabs();
   bindSources();
+  window.speechSynthesis?.getVoices?.();
+  window.speechSynthesis?.addEventListener?.("voiceschanged", getPreferredEnglishVoice);
   els.speakWordBtn.addEventListener("click", () => speak(activeWord().text, 0.72));
   registerServiceWorker();
 }
