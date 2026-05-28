@@ -108,7 +108,7 @@
 
   function handleMapClick(params) {
     if (params.seriesType === "effectScatter" || params.seriesType === "scatter") {
-      selectCity(params.data.id);
+      selectCity(params.data.id, { revealDetail: true });
       return;
     }
 
@@ -193,7 +193,7 @@
       .join("");
 
     Array.from(dom.list.querySelectorAll(".city-row")).forEach((row) => {
-      row.addEventListener("click", () => selectCity(row.dataset.id));
+      row.addEventListener("click", () => selectCity(row.dataset.id, { revealDetail: true }));
     });
   }
 
@@ -208,7 +208,7 @@
     const organizers = city.organizers.length ? city.organizers.join("、") : "待公开";
     const phoneText = city.phone || "待公开";
     const wechatText = city.wechat || "待公开";
-    const primaryLink = city.links[0] || { label: "知识库", url: sources.rootWiki };
+    const cityEntry = getCityEntry(city);
     const latestActivity = city.activities[0];
     const activityMarkup = city.activities.length
       ? city.activities
@@ -223,22 +223,39 @@
           )
           .join("")
       : "<div class=\"empty-state compact\">暂无公开活动记录</div>";
+    const secondaryLinks = city.links
+      .filter((link) => link.url !== cityEntry.url || link.label !== cityEntry.label)
+      .map(
+        (link) => `
+          <a href="${link.url}" target="_blank" rel="noreferrer">
+            <i data-lucide="arrow-up-right"></i>
+            <span>${link.label}</span>
+          </a>
+        `
+      )
+      .join("");
 
     dom.detail.innerHTML = `
+      <div class="city-entry-sticky">
+        <a class="city-entry-action" href="${cityEntry.url}" target="_blank" rel="noreferrer">
+          <i data-lucide="arrow-up-right"></i>
+          <span>${cityEntry.label}</span>
+        </a>
+      </div>
+
       <div class="detail-top">
-        <p class="eyebrow">${city.region} · ${city.province}</p>
-        <h2>${city.name}</h2>
-        <span class="status-badge" style="--status:${status.color}">${status.label}</span>
+        <div class="detail-title">
+          <p class="eyebrow">${city.region} · ${city.province}</p>
+          <h2>${city.name}</h2>
+          <span class="status-badge" style="--status:${status.color}">${status.label}</span>
+        </div>
+        <img class="detail-mascot" src="assets/waytoagi-ip-front.png?v=20260528" alt="" aria-hidden="true" />
       </div>
 
       <div class="detail-actions">
-        <a class="primary-action" href="${primaryLink.url}" target="_blank" rel="noreferrer">
-          <i data-lucide="external-link"></i>
-          ${primaryLink.label}
-        </a>
-        <button class="secondary-action" type="button" data-copy="${city.name} ${primaryLink.url}">
+        <button class="secondary-action" type="button" data-copy="${city.name} ${cityEntry.url}">
           <i data-lucide="copy"></i>
-          复制入口
+          复制城市入口
         </button>
       </div>
 
@@ -279,16 +296,7 @@
       <section class="link-section">
         <h3>公开内容</h3>
         <div class="link-list">
-          ${city.links
-            .map(
-              (link) => `
-                <a href="${link.url}" target="_blank" rel="noreferrer">
-                  <i data-lucide="arrow-up-right"></i>
-                  <span>${link.label}</span>
-                </a>
-              `
-            )
-            .join("")}
+          ${secondaryLinks || "<div class=\"empty-state compact\">暂无更多公开入口</div>"}
         </div>
       </section>
 
@@ -306,10 +314,28 @@
       refreshIcons();
       window.setTimeout(() => {
         copyButton.classList.remove("is-copied");
-        copyButton.innerHTML = '<i data-lucide="copy"></i> 复制入口';
+        copyButton.innerHTML = '<i data-lucide="copy"></i> 复制城市入口';
         refreshIcons();
       }, 1200);
     });
+  }
+
+  function getCityEntry(city) {
+    const cityGroupLink = city.links.find((link) => link.label.includes("城市群入口"));
+    if (cityGroupLink) return cityGroupLink;
+
+    const activityLink = city.links.find((link) => link.label === "最近活动页");
+    if (activityLink) {
+      return {
+        label: `${city.name}城市入口`,
+        url: activityLink.url
+      };
+    }
+
+    return {
+      label: `${city.name}城市入口`,
+      url: sources.cityGuests || sources.rootWiki
+    };
   }
 
   function renderChart() {
@@ -406,10 +432,16 @@
     return [lng + 3.5, lat + 0.6];
   }
 
-  function selectCity(id) {
+  function selectCity(id, options = {}) {
     state.selectedId = id;
     renderAll();
     window.history.replaceState(null, "", `#${id}`);
+
+    if (options.revealDetail && window.matchMedia("(max-width: 820px)").matches) {
+      window.requestAnimationFrame(() => {
+        dom.detail.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
   }
 
   function getInitialCityId() {
