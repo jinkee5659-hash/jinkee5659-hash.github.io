@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WaytoAGI 城市社区地图</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="WaytoAGI 城市社区地图">
+          <span class="brand-mark">AGI</span>
+          <span>
+            <strong>城市社区地图</strong>
+            <small>WaytoAGI China Community Atlas</small>
+          </span>
+        </a>
+        <nav class="source-nav" aria-label="公开内容入口">
+          <a href="https://waytoagi.feishu.cn/wiki/QPe5w5g7UisbEkkow8XcDmOpn8e" target="_blank" rel="noreferrer">
+            <i data-lucide="book-open"></i>
+            知识库
+          </a>
+          <a href="https://waytoagi.feishu.cn/wiki/IBgWwlrp2i3lljk2Wfhc7SN6nme" target="_blank" rel="noreferrer">
+            <i data-lucide="users"></i>
+            组织人指南
+          </a>
+          <a href="https://waytoagi.feishu.cn/wiki/So9cwfj9yiuZJ8kSfLZce7a8nrf" target="_blank" rel="noreferrer">
+            <i data-lucide="calendar-days"></i>
+            活动归档
+          </a>
+        </nav>
+      </header>
+
+      <main class="workspace">
+        <aside class="city-panel" aria-label="城市列表">
+          <section class="panel-heading">
+            <p class="eyebrow">COMMUNITY INDEX</p>
+            <h1>找到你所在城市的社区组织</h1>
+          </section>
+
+          <section class="stats-grid" aria-label="城市概览">
+            <div class="stat">
+              <strong id="totalCities">0</strong>
+              <span>城市节点</span>
+            </div>
+            <div class="stat">
+              <strong id="confirmedCities">0</strong>
+              <span>负责人已知</span>
+            </div>
+            <div class="stat">
+              <strong id="groupCities">0</strong>
+              <span>历史活动</span>
+            </div>
+          </section>
+
+          <label class="search-box" for="citySearch">
+            <i data-lucide="search"></i>
+            <input id="citySearch" type="search" placeholder="搜索城市、负责人、历史活动" autocomplete="off" />
+          </label>
+
+          <div class="filter-row" aria-label="城市筛选">
+            <button class="filter-button is-active" data-filter="all" type="button">
+              <i data-lucide="map"></i>
+              全部
+            </button>
+            <button class="filter-button" data-filter="organizer" type="button">
+              <i data-lucide="badge-check"></i>
+              负责人
+            </button>
+            <button class="filter-button" data-filter="active" type="button">
+              <i data-lucide="activity"></i>
+              活跃
+            </button>
+            <button class="filter-button" data-filter="group" type="button">
+              <i data-lucide="message-circle"></i>
+              城市群
+            </button>
+          </div>
+
+          <button class="province-pill" id="provinceFilter" type="button" hidden>
+            <i data-lucide="x"></i>
+            <span></span>
+          </button>
+
+          <div class="city-list" id="cityList" aria-live="polite"></div>
+        </aside>
+
+        <section class="map-stage" aria-label="中国社区地图">
+          <div class="map-head">
+            <div>
+              <p class="eyebrow">LIVE MAP</p>
+              <h2>中国社区网络</h2>
+            </div>
+            <div class="map-actions">
+              <button id="resetMap" class="icon-button" type="button" title="重置地图">
+                <i data-lucide="rotate-ccw"></i>
+              </button>
+            </div>
+          </div>
+          <div id="chinaMap" class="china-map" role="img" aria-label="中国地图，展示 WaytoAGI 社区城市"></div>
+          <div class="map-legend" aria-label="图例">
+            <span><b class="legend-dot hub"></b>多期活动城市</span>
+            <span><b class="legend-dot active"></b>近期活跃</span>
+            <span><b class="legend-dot history"></b>历史出现</span>
+            <span><b class="legend-dot group"></b>已有城市群</span>
+          </div>
+        </section>
+
+        <aside class="detail-panel" id="detailPanel" aria-label="城市详情"></aside>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="data/cities.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
